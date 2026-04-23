@@ -1,0 +1,17 @@
+[Unit]
+Description=Minecraft skins admin
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+WorkingDirectory=/opt/minecraft
+EnvironmentFile=/opt/minecraft/minecraft.env
+ExecStart=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/start_skin_admin.sh"'
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

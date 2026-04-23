@@ -41,6 +41,15 @@ validate_common_config() {
     RCON_PASSWORD
 }
 
+validate_skin_admin_config() {
+  require_vars \
+    MINECRAFT_HOME \
+    TOOLS_DIR \
+    SKIN_ADMIN_DATA_DIR \
+    SKIN_ADMIN_USERNAME \
+    SKIN_ADMIN_PASSWORD
+}
+
 require_executable() {
   local path="$1"
   [[ -x "$path" ]] || fail "Executable not found or not executable: $path"

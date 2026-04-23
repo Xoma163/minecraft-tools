@@ -39,6 +39,6 @@ minecraft.env
 # Project runtime data
 uploads/
 backups/
-data/
 tmp/
 logs/
+data/
