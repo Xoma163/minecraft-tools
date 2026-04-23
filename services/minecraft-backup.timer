@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Minecraft backup every 6 hours
+
+[Timer]
+OnCalendar=*-*-* 03,09,15,21:00:00
+Persistent=true
+Unit=minecraft-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,23 @@
+[Unit]
+Description=Minecraft Server
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+Nice=1
+EnvironmentFile=/opt/minecraft/minecraft.env
+
+SuccessExitStatus=0 1
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=120
+
+ProtectHome=true
+ProtectSystem=full
+
+ExecStart=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/start_server.sh"'
+ExecStop=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/stop_server.sh" 10'
+
+[Install]
+WantedBy=multi-user.target
