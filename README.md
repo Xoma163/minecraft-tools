@@ -110,7 +110,7 @@ SKIN_ADMIN_PASSWORD=change-me
 - `tools/stop_skin_admin.sh`
 - `tools/skin_admin/`
 
-Они устроены по той же схеме, что и остальные сервисы проекта: читают `/opt/minecraft/minecraft.env`, используют `TOOLS_DIR` и запускают приложение через shell-скрипт. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
+Они устроены по той же схеме, что и остальные сервисы проекта: `systemd` читает `/opt/minecraft/minecraft.env`, а `ExecStart`/`ExecStop` вызывают shell-скрипты напрямую. Сами скрипты уже подгружают `lib.sh` и нужную конфигурацию. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
 
 ### Nginx
 

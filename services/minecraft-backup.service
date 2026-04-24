@@ -8,4 +8,4 @@ Type=oneshot
 User=minecraft
 EnvironmentFile=/opt/minecraft/minecraft.env
 
-ExecStart=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/backup_server.sh"'
+ExecStart=/opt/minecraft/tools/backup_server.sh

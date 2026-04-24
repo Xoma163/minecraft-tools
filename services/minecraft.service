@@ -16,8 +16,8 @@ TimeoutStopSec=120
 ProtectHome=true
 ProtectSystem=full
 
-ExecStart=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/start_server.sh"'
-ExecStop=/usr/bin/bash -lc 'source "$MINECRAFT_HOME/minecraft.env" && exec "$TOOLS_DIR/stop_server.sh" 10'
+ExecStart=/opt/minecraft/tools/start_server.sh
+ExecStop=/opt/minecraft/tools/stop_server.sh 10
 
 [Install]
 WantedBy=multi-user.target
