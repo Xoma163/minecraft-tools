@@ -35,15 +35,27 @@
         .notice { margin: 0 0 24px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); }
         .notice.ok { background: rgba(126, 231, 135, 0.12); color: var(--ok); }
         .notice.error { background: rgba(255, 123, 114, 0.12); color: #ffb4ac; }
+        .tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .tab-button { background: rgba(255, 255, 255, 0.04); color: var(--text); border: 1px solid var(--border); }
+        .tab-button:hover { background: rgba(255, 255, 255, 0.08); }
+        .tab-button.active { background: var(--accent); color: #0a1420; border-color: transparent; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
         .asset-section { margin-top: 28px; }
-        .assets { display: grid; gap: 18px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .assets { display: grid; gap: 18px; }
+        .assets.assets-six { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        .assets.assets-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .asset-card { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
         .preview { width: 100%; height: 220px; border-radius: 14px; background: radial-gradient(circle at top, rgba(116, 192, 252, 0.14), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .assets-six .preview { height: 170px; }
         .preview img { max-width: 100%; max-height: 100%; }
         .preview img.pixelated { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
         .meta { display: flex; flex-direction: column; gap: 6px; }
+        .meta-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+        .meta-title strong { word-break: break-word; }
+        .meta-size { color: var(--muted); font-size: 13px; }
         .meta small { color: var(--muted); }
-        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .actions { display: flex; gap: 8px; flex-wrap: nowrap; }
         .icon-action { width: 44px; height: 44px; padding: 0; }
         .icon-action svg { width: 18px; height: 18px; }
         .icon-action:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2); }
@@ -58,16 +70,26 @@
         .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
         .secondary-button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
 
+        @media (max-width: 1380px) {
+            .assets.assets-six { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        }
+
         @media (max-width: 1080px) {
-            .assets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .assets.assets-six { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .assets.assets-four { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
         @media (max-width: 820px) {
-            .assets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .assets.assets-six, .assets.assets-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .assets-six .preview { height: 190px; }
         }
 
         @media (max-width: 560px) {
-            .assets { grid-template-columns: 1fr; }
+            .assets.assets-six, .assets.assets-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .asset-card { padding: 14px; }
+            .preview, .assets-six .preview { height: 150px; }
+            .actions { gap: 6px; }
+            .icon-action { width: 38px; height: 38px; }
         }
     </style>
 </head>
@@ -81,129 +103,145 @@
     {% if message %}<div class="notice ok">{{ message }}</div>{% endif %}
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
 
-    <section class="grid">
-        <div class="panel">
-            <h2>Добавить скин</h2>
-            <form action="/upload/skins" method="post" enctype="multipart/form-data">
-                <label for="skin-name">Имя игрока</label>
-                <input id="skin-name" type="text" name="name" placeholder="Например: AndrewSha" required>
-                <label for="skin-file">PNG-файл скина</label>
-                <input id="skin-file" type="file" name="file" accept="image/png" required>
-                <button type="submit">Загрузить скин</button>
-            </form>
-        </div>
-
-        <div class="panel">
-            <h2>Добавить плащ</h2>
-            <form action="/upload/capes" method="post" enctype="multipart/form-data">
-                <label for="cape-name">Имя игрока</label>
-                <input id="cape-name" type="text" name="name" placeholder="Например: AndrewSha" required>
-                <label for="cape-file">PNG-файл плаща</label>
-                <input id="cape-file" type="file" name="file" accept="image/png" required>
-                <button type="submit">Загрузить плащ</button>
-            </form>
-        </div>
-
-        <div class="panel">
-            <h2>Добавить GIF</h2>
-            <form action="/upload/gifs" method="post" enctype="multipart/form-data">
-                <label for="gif-name">Название GIF</label>
-                <input id="gif-name" type="text" name="name" placeholder="Например: Lava" required>
-                <label for="gif-file">GIF-файл</label>
-                <input id="gif-file" type="file" name="file" accept="image/gif" required>
-                <button type="submit">Загрузить GIF</button>
-            </form>
-        </div>
+    <section class="tabs" role="tablist" aria-label="Типы ассетов">
+        <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="tab-skins" id="tab-button-skins" data-tab="skins">Скины</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-capes" id="tab-button-capes" data-tab="capes">Плащи</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-gifs" id="tab-button-gifs" data-tab="gifs">GIF</button>
     </section>
 
-    <section class="asset-section">
-        <h2>Скины</h2>
-        {% if skins %}
-            <div class="assets">
-                {% for asset in skins %}
-                    <article class="asset-card">
-                        <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
-                        <div class="meta"><strong>{{ asset.display_name }}</strong><small>{{ asset.file_name }}</small></div>
-                        <div class="actions">
-                            <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
-                            </a>
-                            <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <form class="inline-form" action="/delete/skins" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
-                                <input type="hidden" name="name" value="{{ asset.display_name }}">
-                                <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </article>
-                {% endfor %}
+    <section class="tab-panel active" id="tab-skins" role="tabpanel" aria-labelledby="tab-button-skins">
+        <section class="grid">
+            <div class="panel">
+                <h2>Добавить скин</h2>
+                <form action="/upload/skins" method="post" enctype="multipart/form-data">
+                    <label for="skin-name">Имя игрока</label>
+                    <input id="skin-name" type="text" name="name" placeholder="Например: AndrewSha" required>
+                    <label for="skin-file">PNG-файл скина</label>
+                    <input id="skin-file" type="file" name="file" accept="image/png" required>
+                    <button type="submit">Загрузить скин</button>
+                </form>
             </div>
-        {% else %}
-            <div class="empty">Пока нет ни одного скина.</div>
-        {% endif %}
+        </section>
+
+        <section class="asset-section">
+            <h2>Скины</h2>
+            {% if skins %}
+                <div class="assets assets-six">
+                    {% for asset in skins %}
+                        <article class="asset-card">
+                            <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
+                            <div class="meta"><div class="meta-title"><strong>{{ asset.display_name }}</strong><span class="meta-size">{{ asset.size_label }}</span></div><small>{{ asset.file_name }}</small></div>
+                            <div class="actions">
+                                <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
+                                </a>
+                                <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <form class="inline-form" action="/delete/skins" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
+                                    <input type="hidden" name="name" value="{{ asset.display_name }}">
+                                    <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">Пока нет ни одного скина.</div>
+            {% endif %}
+        </section>
     </section>
 
-    <section class="asset-section">
-        <h2>Плащи</h2>
-        {% if capes %}
-            <div class="assets">
-                {% for asset in capes %}
-                    <article class="asset-card">
-                        <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
-                        <div class="meta"><strong>{{ asset.display_name }}</strong><small>{{ asset.file_name }}</small></div>
-                        <div class="actions">
-                            <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
-                            </a>
-                            <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <form class="inline-form" action="/delete/capes" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
-                                <input type="hidden" name="name" value="{{ asset.display_name }}">
-                                <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </article>
-                {% endfor %}
+    <section class="tab-panel" id="tab-capes" role="tabpanel" aria-labelledby="tab-button-capes">
+        <section class="grid">
+            <div class="panel">
+                <h2>Добавить плащ</h2>
+                <form action="/upload/capes" method="post" enctype="multipart/form-data">
+                    <label for="cape-name">Имя игрока</label>
+                    <input id="cape-name" type="text" name="name" placeholder="Например: AndrewSha" required>
+                    <label for="cape-file">PNG-файл плаща</label>
+                    <input id="cape-file" type="file" name="file" accept="image/png" required>
+                    <button type="submit">Загрузить плащ</button>
+                </form>
             </div>
-        {% else %}
-            <div class="empty">Пока нет ни одного плаща.</div>
-        {% endif %}
+        </section>
+
+        <section class="asset-section">
+            <h2>Плащи</h2>
+            {% if capes %}
+                <div class="assets assets-six">
+                    {% for asset in capes %}
+                        <article class="asset-card">
+                            <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
+                            <div class="meta"><div class="meta-title"><strong>{{ asset.display_name }}</strong><span class="meta-size">{{ asset.size_label }}</span></div><small>{{ asset.file_name }}</small></div>
+                            <div class="actions">
+                                <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
+                                </a>
+                                <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <form class="inline-form" action="/delete/capes" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
+                                    <input type="hidden" name="name" value="{{ asset.display_name }}">
+                                    <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">Пока нет ни одного плаща.</div>
+            {% endif %}
+        </section>
     </section>
 
-    <section class="asset-section">
-        <h2>GIF</h2>
-        {% if gifs %}
-            <div class="assets">
-                {% for asset in gifs %}
-                    <article class="asset-card">
-                        <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
-                        <div class="meta"><strong>{{ asset.display_name }}</strong><small>{{ asset.file_name }}</small></div>
-                        <div class="actions">
-                            <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
-                            </a>
-                            <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <form class="inline-form" action="/delete/gifs" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
-                                <input type="hidden" name="name" value="{{ asset.display_name }}">
-                                <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </article>
-                {% endfor %}
+    <section class="tab-panel" id="tab-gifs" role="tabpanel" aria-labelledby="tab-button-gifs">
+        <section class="grid">
+            <div class="panel">
+                <h2>Добавить GIF</h2>
+                <form action="/upload/gifs" method="post" enctype="multipart/form-data">
+                    <label for="gif-name">Название GIF</label>
+                    <input id="gif-name" type="text" name="name" placeholder="Например: Lava" required>
+                    <label for="gif-file">GIF-файл</label>
+                    <input id="gif-file" type="file" name="file" accept="image/gif" required>
+                    <button type="submit">Загрузить GIF</button>
+                </form>
             </div>
-        {% else %}
-            <div class="empty">Пока нет ни одной GIF.</div>
-        {% endif %}
+        </section>
+
+        <section class="asset-section">
+            <h2>GIF</h2>
+            {% if gifs %}
+                <div class="assets assets-four">
+                    {% for asset in gifs %}
+                        <article class="asset-card">
+                            <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
+                            <div class="meta"><div class="meta-title"><strong>{{ asset.display_name }}</strong><span class="meta-size">{{ asset.size_label }}</span></div><small>{{ asset.file_name }}</small></div>
+                            <div class="actions">
+                                <a class="link-button icon-action" href="{{ asset.url }}" target="_blank" rel="noreferrer" title="Открыть" aria-label="Открыть">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
+                                </a>
+                                <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <form class="inline-form" action="/delete/gifs" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
+                                    <input type="hidden" name="name" value="{{ asset.display_name }}">
+                                    <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">Пока нет ни одной GIF.</div>
+            {% endif %}
+        </section>
     </section>
 </main>
 <div class="modal-backdrop" id="delete-modal" aria-hidden="true">
@@ -218,6 +256,18 @@
 </div>
 <script>
     let pendingDeleteForm = null;
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-button').forEach((button) => {
+            const isActive = button.dataset.tab === tabName;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-selected', String(isActive));
+        });
+
+        document.querySelectorAll('.tab-panel').forEach((panel) => {
+            panel.classList.toggle('active', panel.id === `tab-${tabName}`);
+        });
+    }
 
     async function copyAssetUrl(button, path) {
         const absoluteUrl = new URL(path, window.location.origin).toString();
@@ -275,6 +325,10 @@
         if (event.target.id === 'delete-modal') {
             closeDeleteModal();
         }
+    });
+
+    document.querySelectorAll('.tab-button').forEach((button) => {
+        button.addEventListener('click', () => switchTab(button.dataset.tab));
     });
 </script>
 </body>

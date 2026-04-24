@@ -7,5 +7,6 @@ from dataclasses import dataclass
 class AssetView:
     display_name: str
     file_name: str
+    size_label: str
     url: str
     is_pixelated: bool

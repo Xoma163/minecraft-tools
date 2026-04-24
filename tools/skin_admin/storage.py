@@ -85,6 +85,29 @@ def candidate_rank(stem: str) -> tuple[int, str]:
     return 2, stem
 
 
+def read_image_dimensions(file_path: Path, kind: str) -> tuple[int, int]:
+    header = file_path.read_bytes()[:24]
+
+    if kind in {"skins", "capes"}:
+        if len(header) < 24 or not header.startswith(PNG_SIGNATURE):
+            raise ValueError(f"Invalid PNG file: {file_path}")
+        width = int.from_bytes(header[16:20], "big")
+        height = int.from_bytes(header[20:24], "big")
+        return width, height
+
+    if len(header) < 10 or not any(
+        header.startswith(signature) for signature in GIF_SIGNATURES
+    ):
+        raise ValueError(f"Invalid GIF file: {file_path}")
+    width = int.from_bytes(header[6:8], "little")
+    height = int.from_bytes(header[8:10], "little")
+    return width, height
+
+
+def format_image_dimensions(width: int, height: int) -> str:
+    return f"{width} × {height}"
+
+
 def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
     directory = asset_directories(settings)[kind]
     public_path = ASSET_PUBLIC_PATHS[kind]
@@ -105,10 +128,13 @@ def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
             file_name = min(files, key=lambda item: candidate_rank(Path(item).stem))
             display_name = Path(file_name).stem
 
+        width, height = read_image_dimensions(directory / file_name, kind)
+
         assets.append(
             AssetView(
                 display_name=display_name,
                 file_name=file_name,
+                size_label=format_image_dimensions(width, height),
                 url=f"{public_path.rstrip('/')}/{file_name}",
                 is_pixelated=extension == ".png",
             )
