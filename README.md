@@ -112,6 +112,8 @@ SKIN_ADMIN_PASSWORD=change-me
 
 Они устроены по той же схеме, что и остальные сервисы проекта: `systemd` читает `/opt/minecraft/minecraft.env`, а `ExecStart`/`ExecStop` вызывают shell-скрипты напрямую. Сами скрипты уже подгружают `lib.sh` и нужную конфигурацию. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
 
+Если `uv` установлен через официальный install script в `~/.local/bin`, добавь этот путь в `PATH` прямо в systemd unit через `Environment=`, чтобы сервисы находили бинарник без login shell.
+
 ### Nginx
 
 Готовый конфиг вынесен в отдельный файл:

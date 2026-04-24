@@ -7,5 +7,6 @@ After=minecraft.service
 Type=oneshot
 User=minecraft
 EnvironmentFile=/opt/minecraft/minecraft.env
+Environment="PATH=/home/minecraft/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 ExecStart=/opt/minecraft/tools/backup_server.sh

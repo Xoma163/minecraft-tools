@@ -29,6 +29,20 @@ download_file() {
   fi
 }
 
+install_uv() {
+  if command -v uv >/dev/null 2>&1; then
+    echo "uv is already installed"
+    return 0
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "curl is required to install uv" >&2
+    exit 1
+  fi
+
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+}
+
 install_mcrcon() {
   mkdir -p "$INSTALL_DIR"
 
@@ -48,4 +62,5 @@ install_mcrcon() {
 
 trap cleanup EXIT
 
+install_uv
 install_mcrcon
