@@ -6,7 +6,7 @@
 
 - `tools/` — start, stop, backup, restore, install deps;
 - `services/` — systemd unit-файлы;
-- `tools/skin_admin/` — FastAPI-админка скинов.
+- `tools/minecraft_admin/` — FastAPI-админка для сборки, инструкции и ассетов.
 
 ## Конфиг
 
@@ -16,7 +16,7 @@
 cp minecraft.env.example minecraft.env
 ```
 
-Основные переменные: `MINECRAFT_HOME`, `SERVER_DIR`, `TOOLS_DIR`, `BACKUP_DIR`, `MCRCON_BIN`, `SKIN_ADMIN_DATA_DIR`.
+Основные переменные: `MINECRAFT_HOME`, `SERVER_DIR`, `TOOLS_DIR`, `BACKUP_DIR`, `MCRCON_BIN`, `MINECRAFT_ADMIN_DATA_DIR`.
 
 ## Быстрый старт
 
@@ -29,7 +29,7 @@ sudo systemctl enable --now minecraft.service
 sudo systemctl enable --now minecraft-backup.timer
 ```
 
-## Skin admin
+## Minecraft admin
 
 Админка предназначена для ручного управления файлами, которые потом читает `OfflineSkins`:
 
@@ -63,37 +63,37 @@ uv sync
 set -a
 source ./minecraft.env
 set +a
-uv run uvicorn tools.skin_admin.app:app --reload --port 8010
+uv run uvicorn tools.minecraft_admin.app:app --reload --port 8010
 ```
 
 Локально админка будет доступна на `/`.
 
-Важно: `SKIN_ADMIN_DATA_DIR` обязателен. Без него приложение не стартует.
+Важно: `MINECRAFT_ADMIN_DATA_DIR` обязателен. Без него приложение не стартует.
 
 ### Переменные окружения
 
-- `SKIN_ADMIN_DATA_DIR` — корневая папка, внутри которой приложение использует:
+- `MINECRAFT_ADMIN_DATA_DIR` — корневая папка, внутри которой приложение использует:
   - `skins/`
   - `capes/`
   - `images/`
   - `skin_admin_metadata.json`
-- `SKIN_ADMIN_USERNAME` — логин для админки;
-- `SKIN_ADMIN_PASSWORD` — пароль для админки.
+- `MINECRAFT_ADMIN_USERNAME` — логин для админки;
+- `MINECRAFT_ADMIN_PASSWORD` — пароль для админки.
 
 В боевом окружении удобно держать это в `minecraft.env`, например:
 
 ```bash
-SKIN_ADMIN_DATA_DIR=$MINECRAFT_HOME/data/skin_admin
-SKIN_ADMIN_USERNAME=change-me
-SKIN_ADMIN_PASSWORD=change-me
+MINECRAFT_ADMIN_DATA_DIR=$MINECRAFT_HOME/data/minecraft_admin
+MINECRAFT_ADMIN_USERNAME=change-me
+MINECRAFT_ADMIN_PASSWORD=change-me
 ```
 
 То есть внутри этой папки будут лежать:
 
-- `$SKIN_ADMIN_DATA_DIR/skins/`
-- `$SKIN_ADMIN_DATA_DIR/capes/`
-- `$SKIN_ADMIN_DATA_DIR/images/`
-- `$SKIN_ADMIN_DATA_DIR/skin_admin_metadata.json`
+- `$MINECRAFT_ADMIN_DATA_DIR/skins/`
+- `$MINECRAFT_ADMIN_DATA_DIR/capes/`
+- `$MINECRAFT_ADMIN_DATA_DIR/images/`
+- `$MINECRAFT_ADMIN_DATA_DIR/skin_admin_metadata.json`
 
 Публичные пути в приложении зафиксированы:
 
@@ -113,10 +113,10 @@ GIFs are partially supported, but you might see weird artifacts on GIFs with spe
 
 В репозитории есть:
 
-- `services/minecraft-skins-admin.service`
-- `tools/start_skin_admin.sh`
-- `tools/stop_skin_admin.sh`
-- `tools/skin_admin/`
+- `services/minecraft-admin.service`
+- `tools/start_minecraft_admin.sh`
+- `tools/stop_minecraft_admin.sh`
+- `tools/minecraft_admin/`
 
 Они устроены по той же схеме, что и остальные сервисы проекта: `systemd` читает `/opt/minecraft/minecraft.env`, а `ExecStart`/`ExecStop` вызывают shell-скрипты напрямую. Сами скрипты уже подгружают `lib.sh` и нужную конфигурацию. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
 
@@ -145,7 +145,7 @@ sudo systemctl reload nginx
 - на диске хранится только оригинальное имя файла, а регистрозависимые варианты обрабатываются на GET через metadata;
 - удаление работает по оригинальному имени и заодно чистит старые дубли, если они остались от предыдущей схемы;
 - старые файлы без метаданных тоже будут видны в интерфейсе, но отображаемое имя для них определяется best-effort логикой;
-- если `SKIN_ADMIN_*` переменные не заданы или metadata повреждена, приложение теперь падает сразу на старте, а не работает в частично сломанном состоянии.
+- если `MINECRAFT_ADMIN_*` переменные не заданы или metadata повреждена, приложение теперь падает сразу на старте, а не работает в частично сломанном состоянии.
 
 ## Backup
 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Minecraft Admin — Инструкция{% endblock %}
+
+{% block content %}
+    <section class="hero">
+        <h1>Инструкция</h1>
+        <p>Базовая страница для игроков: как скачать, импортировать и запустить сборку. Сейчас содержимое берётся из файла <code>guide.md</code>.</p>
+    </section>
+
+    <section class="panel">
+        {% if guide_text %}
+            <div class="markdown-body">{{ guide_html | safe }}</div>
+        {% else %}
+            <div class="empty">Инструкция пока пустая.</div>
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block head %}
+    <style>
+        .markdown-body { line-height: 1.7; }
+        .markdown-body > :first-child { margin-top: 0; }
+        .markdown-body > :last-child { margin-bottom: 0; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { margin: 1.2em 0 .5em; }
+        .markdown-body p, .markdown-body ul, .markdown-body ol, .markdown-body pre, .markdown-body blockquote { margin: 0 0 1em; }
+        .markdown-body code { background: rgba(255,255,255,.06); padding: .15em .4em; border-radius: 6px; }
+        .markdown-body pre { background: var(--panel-2); padding: 14px; border-radius: 12px; overflow: auto; }
+        .markdown-body pre code { background: transparent; padding: 0; }
+        .markdown-body blockquote { margin-left: 0; padding-left: 14px; border-left: 3px solid var(--border); color: var(--muted); }
+        .markdown-body a { color: var(--accent); }
+    </style>
+{% endblock %}
