@@ -1,1 +1,0 @@
-"""Skin admin app package."""
