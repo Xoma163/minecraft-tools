@@ -230,10 +230,16 @@ def resolve_asset_file(settings: Settings, kind: str, requested_file: str) -> Pa
     extensions = ASSET_EXTENSIONS[kind]
     directory = asset_directories(settings)[kind]
     requested_path = Path(requested_file)
-    if requested_path.suffix.lower() not in extensions:
+
+    if requested_path.suffix:
+        if requested_path.suffix.lower() not in extensions:
+            raise HTTPException(status_code=404, detail="Файл не найден.")
+        normalized_key = requested_path.stem.lower()
+    elif kind in {"skins", "capes"}:
+        normalized_key = requested_path.name.lower()
+    else:
         raise HTTPException(status_code=404, detail="Файл не найден.")
 
-    normalized_key = requested_path.stem.lower()
     metadata = load_metadata(settings).get(kind, {})
     meta_entry = metadata.get(normalized_key)
 
