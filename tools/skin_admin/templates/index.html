@@ -28,6 +28,7 @@
         .panel { padding: 22px; }
         label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px; }
         input[type="text"], input[type="file"] { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--panel-2); color: var(--text); margin-bottom: 14px; }
+        .panel form small { display: block; margin-bottom: 14px; color: var(--muted); }
         button, .link-button { border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 600; cursor: pointer; background: var(--accent); color: #0a1420; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
         button:hover, .link-button:hover { background: #91d1ff; }
         button.danger { background: rgba(255, 123, 114, 0.16); color: #ffb4ac; border: 1px solid rgba(255, 123, 114, 0.3); }
@@ -95,8 +96,9 @@
 <body>
 <main class="container">
     <section class="hero">
-        <h1>Управление скинами, плащами и GIF</h1>
-        <p>Здесь можно загружать, просматривать и удалять скины, плащи и GIF-файлы, а также быстро копировать ссылки на них. Максимальный размер файла — {{ max_upload_mb }} МБ.</p>
+        <h1>Управление скинами, плащами и картинками</h1>
+        <p>Здесь можно загружать, просматривать и удалять скины, плащи и картинки, а также быстро копировать ссылки на них. Максимальный размер файла — {{ max_upload_mb }} МБ.</p>
+        <p>Если вы обновили скин или плащ, другие игроки увидят изменения после повторного входа в игру.</p>
     </section>
 
     {% if message %}<div class="notice ok">{{ message }}</div>{% endif %}
@@ -105,7 +107,7 @@
     <section class="tabs" role="tablist" aria-label="Типы ассетов">
         <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="tab-skins" id="tab-button-skins" data-tab="skins">Скины</button>
         <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-capes" id="tab-button-capes" data-tab="capes">Плащи</button>
-        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-gifs" id="tab-button-gifs" data-tab="gifs">GIF</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-images" id="tab-button-images" data-tab="images">Картинки</button>
     </section>
 
     <section class="tab-panel active" id="tab-skins" role="tabpanel" aria-labelledby="tab-button-skins">
@@ -198,25 +200,26 @@
         </section>
     </section>
 
-    <section class="tab-panel" id="tab-gifs" role="tabpanel" aria-labelledby="tab-button-gifs">
+    <section class="tab-panel" id="tab-images" role="tabpanel" aria-labelledby="tab-button-images">
         <section class="grid">
             <div class="panel">
-                <h2>Добавить GIF</h2>
-                <form action="/upload/gifs" method="post" enctype="multipart/form-data">
-                    <label for="gif-name">Название GIF</label>
-                    <input id="gif-name" type="text" name="name" placeholder="Например: Lava" required>
-                    <label for="gif-file">GIF-файл</label>
-                    <input id="gif-file" type="file" name="file" accept="image/gif" required>
-                    <button type="submit">Загрузить GIF</button>
+                <h2>Добавить картинку</h2>
+                <form action="/upload/images" method="post" enctype="multipart/form-data">
+                    <label for="image-name">Название картинки</label>
+                    <input id="image-name" type="text" name="name" placeholder="Например: Lava" required>
+                    <label for="image-file">Файл картинки</label>
+                    <input id="image-file" type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" required>
+                    <small>Поддерживаются JPG/JPEG, PNG, WebP и GIF. GIF поддерживается частично и может отображаться с артефактами при некоторых вариантах кодирования.</small>
+                    <button type="submit">Загрузить картинку</button>
                 </form>
             </div>
         </section>
 
         <section class="asset-section">
-            <h2>GIF</h2>
-            {% if gifs %}
+            <h2>Картинки</h2>
+            {% if images %}
                 <div class="assets assets-four">
-                    {% for asset in gifs %}
+                    {% for asset in images %}
                         <article class="asset-card">
                             <div class="preview"><img src="{{ asset.url }}" alt="{{ asset.display_name }}" class="{% if asset.is_pixelated %}pixelated{% endif %}"></div>
                             <div class="meta"><div class="meta-title"><strong>{{ asset.display_name }}</strong></div><small>{{ asset.file_name }}</small><small class="meta-size">{{ asset.size_label }}</small></div>
@@ -227,7 +230,7 @@
                                 <button class="icon-action" type="button" onclick="copyAssetUrl(this, '{{ asset.url }}')" title="Скопировать ссылку" aria-label="Скопировать ссылку">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 </button>
-                                <form class="inline-form" action="/delete/gifs" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
+                                <form class="inline-form" action="/delete/images" method="post" onsubmit="return confirmDelete(event, this, '{{ asset.display_name|e }}')">
                                     <input type="hidden" name="name" value="{{ asset.display_name }}">
                                     <button class="danger icon-action" type="submit" title="Удалить" aria-label="Удалить">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
@@ -238,7 +241,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="empty">Пока нет ни одной GIF.</div>
+                <div class="empty">Пока нет ни одной картинки.</div>
             {% endif %}
         </section>
     </section>

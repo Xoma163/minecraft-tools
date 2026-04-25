@@ -48,9 +48,14 @@ def get_cape(file_name: str):
     return FileResponse(resolve_asset_file(settings, "capes", file_name))
 
 
+@app.get("/images/{file_name}")
+def get_image(file_name: str):
+    return FileResponse(resolve_asset_file(settings, "images", file_name))
+
+
 @app.get("/gifs/{file_name}")
-def get_gif(file_name: str):
-    return FileResponse(resolve_asset_file(settings, "gifs", file_name))
+def get_legacy_gif(file_name: str):
+    return FileResponse(resolve_asset_file(settings, "images", file_name))
 
 
 @app.get("/")
@@ -69,7 +74,7 @@ def index(
             "error": error,
             "skins": collect_assets(settings, "skins"),
             "capes": collect_assets(settings, "capes"),
-            "gifs": collect_assets(settings, "gifs"),
+            "images": collect_assets(settings, "images"),
             "max_upload_mb": settings.max_upload_size_bytes // (1024 * 1024),
         },
     )
@@ -87,9 +92,9 @@ async def upload_asset(
             raise HTTPException(status_code=404, detail="Неизвестный тип ассета.")
 
         original_name = normalize_name(name)
-        content = await read_asset_content(settings, kind, file)
+        content, file_extension = await read_asset_content(settings, kind, file)
 
-        save_asset(settings, kind, original_name, content)
+        save_asset(settings, kind, original_name, content, file_extension)
         upsert_metadata(settings, kind, original_name)
         message_text = f"{ASSET_ACTION_LABELS[kind]['upload']} {original_name}"
 

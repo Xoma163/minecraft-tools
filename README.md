@@ -75,7 +75,7 @@ uv run uvicorn tools.skin_admin.app:app --reload --port 8010
 - `SKIN_ADMIN_DATA_DIR` — корневая папка, внутри которой приложение использует:
   - `skins/`
   - `capes/`
-  - `gifs/`
+  - `images/`
   - `skin_admin_metadata.json`
 - `SKIN_ADMIN_USERNAME` — логин для админки;
 - `SKIN_ADMIN_PASSWORD` — пароль для админки.
@@ -92,14 +92,22 @@ SKIN_ADMIN_PASSWORD=change-me
 
 - `$SKIN_ADMIN_DATA_DIR/skins/`
 - `$SKIN_ADMIN_DATA_DIR/capes/`
-- `$SKIN_ADMIN_DATA_DIR/gifs/`
+- `$SKIN_ADMIN_DATA_DIR/images/`
 - `$SKIN_ADMIN_DATA_DIR/skin_admin_metadata.json`
 
 Публичные пути в приложении зафиксированы:
 
 - скины: `/skins`
 - плащи: `/capes`
-- гифки: `/gifs`
+- картинки: `/images`
+
+### Online Displays
+
+Online Displays adds one block: Display.
+It allows setting up an image, positioning, rotating, and scaling it to your exact need so that everyone can see it.
+Additionally, its lighting may be disabled, essentially rendering it emissive.
+The Display block supports a variety of image formats, such as JPG/JPEG, PNG, WebP, and GIF.
+GIFs are partially supported, but you might see weird artifacts on GIFs with specific encoding.
 
 ### Пример systemd unit
 
@@ -132,8 +140,8 @@ sudo systemctl reload nginx
 
 ### Примечания
 
-- приложение принимает только `.png` для скинов/плащей и `.gif` для GIF;
-- максимальный размер одного загружаемого файла — `100 МБ`;
+- приложение принимает только `.png` для скинов/плащей и `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif` для картинок;
+- максимальный размер одного загружаемого файла — `10 МБ`;
 - на диске хранится только оригинальное имя файла, а регистрозависимые варианты обрабатываются на GET через metadata;
 - удаление работает по оригинальному имени и заодно чистит старые дубли, если они остались от предыдущей схемы;
 - старые файлы без метаданных тоже будут видны в интерфейсе, но отображаемое имя для них определяется best-effort логикой;

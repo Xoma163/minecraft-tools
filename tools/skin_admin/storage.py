@@ -6,13 +6,12 @@ from tempfile import NamedTemporaryFile
 from typing import Any
 
 from fastapi import HTTPException, UploadFile
+from PIL import Image, UnidentifiedImageError
 
 from tools.skin_admin.config import Settings
 from tools.skin_admin.constants import (
     ASSET_EXTENSIONS,
     ASSET_PUBLIC_PATHS,
-    GIF_SIGNATURES,
-    PNG_SIGNATURE,
 )
 from tools.skin_admin.models import AssetView
 
@@ -21,26 +20,35 @@ def asset_directories(settings: Settings) -> dict[str, Path]:
     return {
         "skins": settings.skins_dir,
         "capes": settings.capes_dir,
-        "gifs": settings.gifs_dir,
+        "images": settings.images_dir,
     }
 
 
 def ensure_storage(settings: Settings) -> None:
+    legacy_gifs_dir = settings.data_dir / "gifs"
+    if legacy_gifs_dir.exists() and not settings.images_dir.exists():
+        legacy_gifs_dir.rename(settings.images_dir)
+
     settings.skins_dir.mkdir(parents=True, exist_ok=True)
     settings.capes_dir.mkdir(parents=True, exist_ok=True)
-    settings.gifs_dir.mkdir(parents=True, exist_ok=True)
+    settings.images_dir.mkdir(parents=True, exist_ok=True)
     settings.metadata_path.parent.mkdir(parents=True, exist_ok=True)
     if not settings.metadata_path.exists():
-        save_metadata(settings, {"skins": {}, "capes": {}, "gifs": {}})
+        save_metadata(settings, {"skins": {}, "capes": {}, "images": {}})
 
 
 def normalize_metadata(
     data: dict[str, Any], settings: Settings
 ) -> dict[str, dict[str, dict[str, str]]]:
     normalized = dict(data)
+    legacy_gifs = normalized.get("gifs")
+    if "images" not in normalized and isinstance(legacy_gifs, dict):
+        normalized["images"] = legacy_gifs
+
     for kind in asset_directories(settings):
         value = normalized.get(kind)
         normalized[kind] = value if isinstance(value, dict) else {}
+    normalized.pop("gifs", None)
     return normalized
 
 
@@ -86,22 +94,11 @@ def candidate_rank(stem: str) -> tuple[int, str]:
 
 
 def read_image_dimensions(file_path: Path, kind: str) -> tuple[int, int]:
-    header = file_path.read_bytes()[:24]
-
-    if kind in {"skins", "capes"}:
-        if len(header) < 24 or not header.startswith(PNG_SIGNATURE):
-            raise ValueError(f"Invalid PNG file: {file_path}")
-        width = int.from_bytes(header[16:20], "big")
-        height = int.from_bytes(header[20:24], "big")
-        return width, height
-
-    if len(header) < 10 or not any(
-        header.startswith(signature) for signature in GIF_SIGNATURES
-    ):
-        raise ValueError(f"Invalid GIF file: {file_path}")
-    width = int.from_bytes(header[6:8], "little")
-    height = int.from_bytes(header[8:10], "little")
-    return width, height
+    try:
+        with Image.open(file_path) as image:
+            return image.size
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError(f"Invalid image file: {file_path}") from exc
 
 
 def format_image_dimensions(width: int, height: int) -> str:
@@ -111,12 +108,13 @@ def format_image_dimensions(width: int, height: int) -> str:
 def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
     directory = asset_directories(settings)[kind]
     public_path = ASSET_PUBLIC_PATHS[kind]
-    extension = ASSET_EXTENSIONS[kind]
+    extensions = ASSET_EXTENSIONS[kind]
     metadata = load_metadata(settings).get(kind, {})
     grouped: dict[str, list[str]] = {}
 
-    for file_path in directory.glob(f"*{extension}"):
-        grouped.setdefault(file_path.stem.lower(), []).append(file_path.name)
+    for file_path in directory.iterdir():
+        if file_path.is_file() and file_path.suffix.lower() in extensions:
+            grouped.setdefault(file_path.stem.lower(), []).append(file_path.name)
 
     assets: list[AssetView] = []
     for normalized_key, files in grouped.items():
@@ -125,7 +123,14 @@ def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
             file_name = meta_entry["original_file"]
             display_name = meta_entry["original_name"]
         else:
-            file_name = min(files, key=lambda item: candidate_rank(Path(item).stem))
+            file_name = min(
+                files,
+                key=lambda item: (
+                    candidate_rank(Path(item).stem),
+                    extensions.index(Path(item).suffix.lower()),
+                    item.lower(),
+                ),
+            )
             display_name = Path(file_name).stem
 
         width, height = read_image_dimensions(directory / file_name, kind)
@@ -136,7 +141,7 @@ def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
                 file_name=file_name,
                 size_label=format_image_dimensions(width, height),
                 url=f"{public_path.rstrip('/')}/{file_name}",
-                is_pixelated=extension == ".png",
+                is_pixelated=kind in {"skins", "capes"},
             )
         )
 
@@ -145,12 +150,13 @@ def collect_assets(settings: Settings, kind: str) -> list[AssetView]:
 
 async def read_asset_content(
     settings: Settings, kind: str, upload: UploadFile
-) -> bytes:
-    extension = ASSET_EXTENSIONS[kind]
-    if Path(upload.filename or "").suffix.lower() != extension:
+) -> tuple[bytes, str]:
+    extensions = ASSET_EXTENSIONS[kind]
+    file_extension = Path(upload.filename or "").suffix.lower()
+    if file_extension not in extensions:
         raise HTTPException(
             status_code=400,
-            detail=f"Поддерживаются только {extension.upper()}-файлы.",
+            detail=f"Поддерживаются только файлы: {', '.join(ext.upper() for ext in extensions)}.",
         )
 
     content = await upload.read(settings.max_upload_size_bytes + 1)
@@ -159,28 +165,32 @@ async def read_asset_content(
             status_code=413,
             detail=f"Файл слишком большой. Максимум {settings.max_upload_size_bytes // (1024 * 1024)} МБ.",
         )
-
-    if kind in {"skins", "capes"} and not content.startswith(PNG_SIGNATURE):
-        raise HTTPException(status_code=400, detail="Файл не похож на PNG.")
-    if kind == "gifs" and not any(
-        content.startswith(signature) for signature in GIF_SIGNATURES
-    ):
-        raise HTTPException(status_code=400, detail="Файл не похож на GIF.")
-    return content
+    return content, file_extension
 
 
 def upsert_metadata(settings: Settings, kind: str, original_name: str) -> None:
-    extension = ASSET_EXTENSIONS[kind]
+    extensions = ASSET_EXTENSIONS[kind]
     data = load_metadata(settings)
+    directory = asset_directories(settings)[kind]
+    original_file = next(
+        (
+            file_path.name
+            for file_path in directory.iterdir()
+            if file_path.is_file()
+            and file_path.stem == original_name
+            and file_path.suffix.lower() in extensions
+        ),
+        f"{original_name}{extensions[0]}",
+    )
     data.setdefault(kind, {})[original_name.lower()] = {
         "original_name": original_name,
-        "original_file": f"{original_name}{extension}",
+        "original_file": original_file,
     }
     save_metadata(settings, data)
 
 
 def delete_asset_files(settings: Settings, kind: str, original_name: str) -> None:
-    extension = ASSET_EXTENSIONS[kind]
+    extensions = ASSET_EXTENSIONS[kind]
     directory = asset_directories(settings)[kind]
     data = load_metadata(settings)
     normalized_key = original_name.lower()
@@ -191,8 +201,13 @@ def delete_asset_files(settings: Settings, kind: str, original_name: str) -> Non
         if original_file.exists():
             original_file.unlink()
 
-    for file_path in directory.glob(f"*{extension}"):
-        if file_path.stem.lower() == normalized_key and file_path.exists():
+    for file_path in directory.iterdir():
+        if (
+            file_path.is_file()
+            and file_path.suffix.lower() in extensions
+            and file_path.stem.lower() == normalized_key
+            and file_path.exists()
+        ):
             file_path.unlink()
 
     data.setdefault(kind, {}).pop(normalized_key, None)
@@ -200,19 +215,22 @@ def delete_asset_files(settings: Settings, kind: str, original_name: str) -> Non
 
 
 def save_asset(
-    settings: Settings, kind: str, original_name: str, content: bytes
+    settings: Settings,
+    kind: str,
+    original_name: str,
+    content: bytes,
+    file_extension: str,
 ) -> None:
-    extension = ASSET_EXTENSIONS[kind]
     directory = asset_directories(settings)[kind]
     directory.mkdir(parents=True, exist_ok=True)
-    (directory / f"{original_name}{extension}").write_bytes(content)
+    (directory / f"{original_name}{file_extension}").write_bytes(content)
 
 
 def resolve_asset_file(settings: Settings, kind: str, requested_file: str) -> Path:
-    extension = ASSET_EXTENSIONS[kind]
+    extensions = ASSET_EXTENSIONS[kind]
     directory = asset_directories(settings)[kind]
     requested_path = Path(requested_file)
-    if requested_path.suffix.lower() != extension:
+    if requested_path.suffix.lower() not in extensions:
         raise HTTPException(status_code=404, detail="Файл не найден.")
 
     normalized_key = requested_path.stem.lower()
@@ -226,10 +244,19 @@ def resolve_asset_file(settings: Settings, kind: str, requested_file: str) -> Pa
 
     candidates = [
         file_path
-        for file_path in directory.glob(f"*{extension}")
-        if file_path.stem.lower() == normalized_key
+        for file_path in directory.iterdir()
+        if file_path.is_file()
+        and file_path.suffix.lower() in extensions
+        and file_path.stem.lower() == normalized_key
     ]
     if candidates:
-        return min(candidates, key=lambda item: candidate_rank(item.stem))
+        return min(
+            candidates,
+            key=lambda item: (
+                candidate_rank(item.stem),
+                extensions.index(item.suffix.lower()),
+                item.name.lower(),
+            ),
+        )
 
     raise HTTPException(status_code=404, detail="Файл не найден.")

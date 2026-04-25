@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024
+MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
 
 
 def required_env(name: str) -> str:
@@ -24,7 +24,7 @@ class Settings:
     data_dir: Path
     skins_dir: Path
     capes_dir: Path
-    gifs_dir: Path
+    images_dir: Path
     metadata_path: Path
     admin_username: str
     admin_password: str
@@ -37,7 +37,7 @@ def load_settings() -> Settings:
         data_dir=data_dir,
         skins_dir=data_dir / "skins",
         capes_dir=data_dir / "capes",
-        gifs_dir=data_dir / "gifs",
+        images_dir=data_dir / "images",
         metadata_path=data_dir / "skin_admin_metadata.json",
         admin_username=required_env("SKIN_ADMIN_USERNAME"),
         admin_password=required_env("SKIN_ADMIN_PASSWORD"),
