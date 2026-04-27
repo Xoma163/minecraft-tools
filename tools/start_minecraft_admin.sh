@@ -8,4 +8,4 @@ load_config
 validate_minecraft_admin_config
 
 cd "$MINECRAFT_HOME"
-exec uv run uvicorn tools.minecraft_admin.app:app --host 127.0.0.1 --port 8010
+exec uv run uvicorn tools.minecraft_admin.app:app --host 127.0.0.1 --port "$MINECRAFT_ADMIN_PORT"

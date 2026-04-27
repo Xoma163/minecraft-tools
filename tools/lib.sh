@@ -51,7 +51,8 @@ validate_minecraft_admin_config() {
     TOOLS_DIR \
     MINECRAFT_ADMIN_DATA_DIR \
     MINECRAFT_ADMIN_USERNAME \
-    MINECRAFT_ADMIN_PASSWORD
+    MINECRAFT_ADMIN_PASSWORD \
+    MINECRAFT_ADMIN_PORT
 }
 
 validate_skin_admin_config() {
