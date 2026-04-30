@@ -4,7 +4,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-
 MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
 MAX_BUILD_SIZE_BYTES = 1024 * 1024 * 1024
 
@@ -16,10 +15,8 @@ def required_env(name: str) -> str:
     return value
 
 
-
 def required_env_path(name: str) -> Path:
     return Path(required_env(name)).expanduser().resolve()
-
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,9 +37,9 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    data_dir = required_env(
+    data_dir = Path(required_env(
         "MINECRAFT_ADMIN_DATA_DIR",
-    )
+    ))
     return Settings(
         data_dir=data_dir,
         skins_dir=data_dir / "skins",
