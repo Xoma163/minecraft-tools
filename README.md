@@ -22,8 +22,9 @@ cp minecraft.env.example minecraft.env
 
 ```bash
 /opt/minecraft/tools/install_deps.sh
-sudo ln -s /opt/minecraft/services/*.service /etc/systemd/system/
-sudo ln -s /opt/minecraft/services/*.timer /etc/systemd/system/
+sudo ln -s /opt/minecraft/services/minecraft-admin.service /etc/systemd/system/
+sudo ln -s /opt/minecraft/services/minecraft-backup.service /etc/systemd/system/
+sudo ln -s /opt/minecraft/services/minecraft-backup.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now minecraft.service
 sudo systemctl enable --now minecraft-backup.timer
@@ -76,7 +77,7 @@ uv run uvicorn tools.minecraft_admin.app:app --reload --port 8010
   - `skins/`
   - `capes/`
   - `images/`
-  - `skin_admin_metadata.json`
+  - `minecraft_admin_metadata.json`
 - `MINECRAFT_ADMIN_USERNAME` — логин для админки;
 - `MINECRAFT_ADMIN_PASSWORD` — пароль для админки.
 
@@ -93,7 +94,7 @@ MINECRAFT_ADMIN_PASSWORD=change-me
 - `$MINECRAFT_ADMIN_DATA_DIR/skins/`
 - `$MINECRAFT_ADMIN_DATA_DIR/capes/`
 - `$MINECRAFT_ADMIN_DATA_DIR/images/`
-- `$MINECRAFT_ADMIN_DATA_DIR/skin_admin_metadata.json`
+- `$MINECRAFT_ADMIN_DATA_DIR/minecraft_admin_metadata.json`
 
 Публичные пути в приложении зафиксированы:
 

@@ -16,28 +16,10 @@ def required_env(name: str) -> str:
     return value
 
 
-def required_env_alias(primary_name: str, *legacy_names: str) -> str:
-    value = os.getenv(primary_name)
-    if value:
-        return value
-
-    for legacy_name in legacy_names:
-        legacy_value = os.getenv(legacy_name)
-        if legacy_value:
-            return legacy_value
-
-    fallback_names = ", ".join((primary_name, *legacy_names))
-    raise RuntimeError(
-        f"Required environment variable is missing. Use one of: {fallback_names}"
-    )
-
 
 def required_env_path(name: str) -> Path:
     return Path(required_env(name)).expanduser().resolve()
 
-
-def required_env_path_alias(primary_name: str, *legacy_names: str) -> Path:
-    return Path(required_env_alias(primary_name, *legacy_names)).expanduser().resolve()
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,8 +40,8 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    data_dir = required_env_path_alias(
-        "MINECRAFT_ADMIN_DATA_DIR", "SKIN_ADMIN_DATA_DIR"
+    data_dir = required_env(
+        "MINECRAFT_ADMIN_DATA_DIR",
     )
     return Settings(
         data_dir=data_dir,
@@ -70,11 +52,11 @@ def load_settings() -> Settings:
         current_builds_dir=data_dir / "builds" / "current",
         pages_dir=data_dir / "pages",
         guide_path=data_dir / "pages" / "guide.md",
-        metadata_path=data_dir / "skin_admin_metadata.json",
-        admin_username=required_env_alias(
-            "MINECRAFT_ADMIN_USERNAME", "SKIN_ADMIN_USERNAME"
+        metadata_path=data_dir / "minecraft_admin_metadata.json",
+        admin_username=required_env(
+            "MINECRAFT_ADMIN_USERNAME",
         ),
-        admin_password=required_env_alias(
-            "MINECRAFT_ADMIN_PASSWORD", "SKIN_ADMIN_PASSWORD"
+        admin_password=required_env(
+            "MINECRAFT_ADMIN_PASSWORD",
         ),
     )

@@ -42,10 +42,6 @@ validate_common_config() {
 }
 
 validate_minecraft_admin_config() {
-  : "${MINECRAFT_ADMIN_DATA_DIR:=${SKIN_ADMIN_DATA_DIR:-}}"
-  : "${MINECRAFT_ADMIN_USERNAME:=${SKIN_ADMIN_USERNAME:-}}"
-  : "${MINECRAFT_ADMIN_PASSWORD:=${SKIN_ADMIN_PASSWORD:-}}"
-
   require_vars \
     MINECRAFT_HOME \
     TOOLS_DIR \
@@ -53,10 +49,6 @@ validate_minecraft_admin_config() {
     MINECRAFT_ADMIN_USERNAME \
     MINECRAFT_ADMIN_PASSWORD \
     MINECRAFT_ADMIN_PORT
-}
-
-validate_skin_admin_config() {
-  validate_minecraft_admin_config
 }
 
 require_executable() {
