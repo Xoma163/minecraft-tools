@@ -10,10 +10,10 @@
 
 ## Конфиг
 
-Локальный конфиг сервера: `minecraft.env` в корне проекта.
+Локальный конфиг сервера: `.env` в корне проекта.
 
 ```bash
-cp minecraft.env.example minecraft.env
+cp .env.example .env
 ```
 
 Основные переменные: `MINECRAFT_HOME`, `SERVER_DIR`, `TOOLS_DIR`, `BACKUP_DIR`, `MCRCON_BIN`, `MINECRAFT_ADMIN_DATA_DIR`.
@@ -22,10 +22,12 @@ cp minecraft.env.example minecraft.env
 
 ```bash
 /opt/minecraft/tools/install_deps.sh
+sudo ln -s /opt/minecraft/services/minecraft.service /etc/systemd/system/
 sudo ln -s /opt/minecraft/services/minecraft-admin.service /etc/systemd/system/
 sudo ln -s /opt/minecraft/services/minecraft-backup.service /etc/systemd/system/
 sudo ln -s /opt/minecraft/services/minecraft-backup.timer /etc/systemd/system/
 sudo systemctl daemon-reload
+sudo systemctl enable --now minecraft-admin.service
 sudo systemctl enable --now minecraft.service
 sudo systemctl enable --now minecraft-backup.timer
 ```
@@ -62,7 +64,7 @@ uv sync
 
 ```bash
 set -a
-source ./minecraft.env
+source ./.env
 set +a
 uv run uvicorn tools.minecraft_admin.app:app --reload --port 8010
 ```
@@ -81,7 +83,7 @@ uv run uvicorn tools.minecraft_admin.app:app --reload --port 8010
 - `MINECRAFT_ADMIN_USERNAME` — логин для админки;
 - `MINECRAFT_ADMIN_PASSWORD` — пароль для админки.
 
-В боевом окружении удобно держать это в `minecraft.env`, например:
+В боевом окружении удобно держать это в `.env`, например:
 
 ```bash
 MINECRAFT_ADMIN_DATA_DIR=$MINECRAFT_HOME/data/minecraft_admin
@@ -119,7 +121,7 @@ GIFs are partially supported, but you might see weird artifacts on GIFs with spe
 - `tools/stop_minecraft_admin.sh`
 - `tools/minecraft_admin/`
 
-Они устроены по той же схеме, что и остальные сервисы проекта: `systemd` читает `/opt/minecraft/minecraft.env`, а `ExecStart`/`ExecStop` вызывают shell-скрипты напрямую. Сами скрипты уже подгружают `lib.sh` и нужную конфигурацию. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
+Они устроены по той же схеме, что и остальные сервисы проекта: `systemd` читает `/opt/minecraft/.env`, а `ExecStart`/`ExecStop` вызывают shell-скрипты напрямую. Сами скрипты уже подгружают `lib.sh` и нужную конфигурацию. Остановка сервиса в `systemd` идёт штатно через сигнал основному `uvicorn`-процессу.
 
 Если `uv` установлен через официальный install script в `~/.local/bin`, добавь этот путь в `PATH` прямо в systemd unit через `Environment=`, чтобы сервисы находили бинарник без login shell.
 

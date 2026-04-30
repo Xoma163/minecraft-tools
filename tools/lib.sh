@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIG_FILE="${MINECRAFT_ENV_FILE:-$ROOT_DIR/minecraft.env}"
+CONFIG_FILE="${MINECRAFT_ENV_FILE:-$ROOT_DIR/.env}"
 
 fail() {
   echo "$*" >&2

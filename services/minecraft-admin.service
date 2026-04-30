@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=minecraft
 WorkingDirectory=/opt/minecraft
-EnvironmentFile=/opt/minecraft/minecraft.env
+EnvironmentFile=/opt/minecraft/.env
 Environment="PATH=/home/minecraft/.local/bin:/usr/local/bin:/usr/bin:/bin"
 ExecStart=/opt/minecraft/tools/start_minecraft_admin.sh
 Restart=on-failure
