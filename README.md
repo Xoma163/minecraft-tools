@@ -1,4 +1,4 @@
-# minecraft-things
+# minecraft-tools
 
 Набор скриптов, systemd unit-файлов и маленьких сервисов для управления Minecraft-сервером.
 
